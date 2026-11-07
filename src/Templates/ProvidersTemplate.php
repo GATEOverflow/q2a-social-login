@@ -7,12 +7,12 @@ use PUPI_SL\Models\ProviderModel;
 
 class ProvidersTemplate
 {
-    public function getLoginButtons(array $providers)
+    public function getLoginButtons(array $providers, $to = null)
     {
         $html = '<div class="pupi_sl-login-buttons-container">';
 
         foreach ($providers as $provider) {
-            $html .= $this->getLoginButtonsForProvider($provider);
+            $html .= $this->getLoginButtonsForProvider($provider, $to);
         }
 
         $html .= '</div>'; // pupi_sl-login-buttons-container
@@ -35,13 +35,18 @@ class ProvidersTemplate
         return $providerImage;
     }
 
-    public function getLoginButtonsForProvider($provider)
+    public function getLoginButtonsForProvider($provider, $to = null)
     {
         $loginText = str_contains($_SERVER['REQUEST_URI'], 'register')
             ? pupi_sl()->util()->langHtml(Config::LANG_ID_REGISTER_WITH_PROVIDER, $provider['name'])
             : pupi_sl()->util()->langHtml(Config::LANG_ID_LOGIN_WITH_PROVIDER, $provider['name']);
 
-        $url = qa_path('', array('action' => 'login', 'provider' => $provider['id']), qa_path_to_root());
+        $params = array('action' => 'login', 'provider' => $provider['id']);
+        if (!empty($to)) {
+            $params['to'] = $to;
+        }
+
+        $url = qa_path('', $params, qa_path_to_root());
 
         $html = sprintf('<a class="pupi_sl-login-button" href="%s">', $url);
 

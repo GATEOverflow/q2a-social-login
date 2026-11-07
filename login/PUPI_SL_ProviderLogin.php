@@ -52,6 +52,8 @@ class PUPI_SL_ProviderLogin
         }
 
         $storage = new Session();
+        $redirectTo = null;
+
         try {
             $config = $this->getProvidersConfig([$providerId]);
 
@@ -59,12 +61,18 @@ class PUPI_SL_ProviderLogin
 
             if (qa_get('action') === 'login') {
                 $storage->set('provider', $providerId);
+
+                $to = qa_get('to');
+                $storage->set('to', empty($to) ? null : $to);
             }
 
             $storedProvider = $storage->get('provider');
             if ($storedProvider === $providerId) {
                 $hybridauth->authenticate($providerId);
                 $storage->set('provider', null);
+
+                $redirectTo = $storage->get('to');
+                $storage->set('to', null);
 
                 // Retrieve the provider record
                 $adapter = $hybridauth->getAdapter($providerId);
@@ -89,6 +97,11 @@ class PUPI_SL_ProviderLogin
             }
 
             $storage->set('provider', null);
+            $storage->set('to', null);
+        }
+
+        if (!empty($redirectTo)) {
+            qa_redirect_raw(qa_path_to_root() . $redirectTo); // path already provided as URL fragment
         }
 
         qa_redirect('');
@@ -122,7 +135,7 @@ class PUPI_SL_ProviderLogin
             return;
         }
 
-        echo (new ProvidersTemplate())->getLoginButtons($this->enabledProviders);
+        echo (new ProvidersTemplate())->getLoginButtons($this->enabledProviders, qa_get('to'));
     }
 
     public function logout_html($tourl)
